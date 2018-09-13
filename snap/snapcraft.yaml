@@ -1,0 +1,54 @@
+name: zoom
+version: dev
+version-script: cat $SNAPCRAFT_STAGE/opt/zoom/version.txt
+summary: "Have meetings with clear video, screen sharing, and instant messaging."
+description: |
+  Award winning Zoom brings video conferencing, online meetings and group 
+  messaging into one easy-to-use application. 
+  
+  Zoom is used by over 500,000 customer organizations and is #1 in customer 
+  satisfaction. 
+  It's super easy: install the free Zoom app, click on "Host a Meeting" and 
+  invite up to 100 people to join!
+
+  The snap is created from the official .deb files released by Zoom Video 
+  Communications, packaged by Ricardo N Feliciano (FelicianoTech).
+grade: stable
+#confinement: strict
+confinement: devmode
+#base: core18
+#icon: icon.png
+
+parts:
+  zoom:
+    plugin: dump
+    source: https://zoom.us/client/latest/zoom_amd64.deb
+    source-type: deb
+    override-build: |
+      rm usr/bin/zoom
+      snapcraftctl build
+      DEB_API="https://zoom.us/client/latest/zoom_amd64.deb"
+      DEB_URL=$(curl -w "%{url_effective}\n" -I -L -s -S "${DEB_API}" -o /dev/null)
+      sed -i 's|Icon=Zoom.png|Icon=/opt/zoom/Zoom\.png|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/Zoom.desktop
+      sed -i 's|Exec=/usr/bin/zoom %U|Exec=/opt/zoom/ZoomLauncher|' ${SNAPCRAFT_PART_INSTALL}/usr/share/applications/Zoom.desktop
+    after:
+      - desktop-qt5
+    #build-attributes: [keep-execstack]
+    build-packages:
+      - dpkg
+    stage-packages:
+      - libx11-6
+      - libxcb-xtest0
+
+apps:
+  zoom:
+    command: bin/desktop-launch $SNAP/opt/zoom/ZoomLauncher
+    desktop: usr/share/applications/Zoom.desktop
+    plugs:
+      - desktop
+      - desktop-legacy
+      - home
+      - network
+      - opengl
+      - unity7
+      - x11
